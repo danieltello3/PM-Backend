@@ -117,7 +117,7 @@ app.post('/pokemon/save', async (req, res, next) => {
   connection.get(sql, params, (err, row) => {
     if (err) {
       console.error(err);
-      res.status(500).send('ups, ocurrió un error');
+      res.status(500).send('Ocurrió un error');
     }else{
       connection.close();
       if (id != 0){
@@ -143,7 +143,7 @@ app.post('/user/create', async (req, res, next) => {
   connection.get(query1, [user, email], (err, row) => {
     if (err) {
       console.error(err);
-      res.status(500).send('ups, ocurrió un error');
+      res.status(500).send('Ocurrió un error');
     }
     if (row['count'] == 0){
       connection.run(query2, [user, password, email, image_url], function(err) {
@@ -201,9 +201,9 @@ app.post('/user/create_account', async (req, res, next) => {
 
 app.post('/user/reset_password', async (req, res) => {
   // data
-  var correo = req.body.correo;
+  var correo = req.body.email;
   // logic
-  var query = `SELECT COUNT(*) AS count FROM users WHERE email=?`;
+  var query = `SELECT id ,COUNT(*) AS count FROM users WHERE email=?`;
   let connection = dbApp()
   connection.get(query, [correo], (err, row) => {
     if (err) {
@@ -213,11 +213,7 @@ app.post('/user/reset_password', async (req, res) => {
     console.log(row)
     if (row['count'] == 1){
       var response = {
-        id:row['id'],
-        user: row['user'], 
-        name: row['name'], 
-        email: row['email'], 
-        image_url: row['image_url']
+        id:row['id']
       }
       res.status(200).send(response)
     }else{
