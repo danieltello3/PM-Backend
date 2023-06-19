@@ -162,40 +162,55 @@ app.post('/user/create', async (req, res, next) => {
   });
 });
 
-app.post('/user/reset_password', async (req, res, next) => {
+app.post('/user/create_account', async (req, res, next) => {
   // data
-  var email = req.body.email;
+  var usuario = req.body.user
+  var contrasenia = req.body.password;
+  var correo = req.body.email;
+  var image_url = 'user_default.png';
   // logic
-  var query = `SELECT COUNT(*) AS count FROM users WHERE email=?`;
+  var query1 = `SELECT COUNT(*) AS count FROM users WHERE user=? OR email=?`;
+  var query2 = `INSERT INTO users (user, password, email, image_url) VALUES (?, ?, ?, ?)`;
   let connection = dbApp()
-  connection.get(query, [email], (err, row) => {
+  connection.get(query1, [usuario, correo], (err, row) => {
     if (err) {
       console.error(err);
-      res.status(500).send('ups, ocurrió un error');
+      res.status(500).send('Error: Ocurrio un error');
     }
-    console.log(row)
-    if (row['count'] == 1){
-      res.status(200).send('Todo OK')
+    if (row['count'] == 0){
+      connection.run(query2, [usuario, contrasenia, correo, image_url], function(err) {
+        if (err) {
+          connection.close();
+          res.status(500).send('Error al crear al nuevo usuario')
+        }
+        var response = {
+          id:row['id'],
+          user: row['user'], 
+          name: row['name'], 
+          email: row['email'], 
+          image_url: row['image_url']
+        }
+        res.status(200).send(response)
+      });
     }else{
       connection.close();
-      res.status(500).send('Correo no registrado')
+      res.status(500).send('Usuario y/o correo ya existentes')
     }
   });
 });
 
-app.post('/user/validate', async (req, res, next) => {
+app.post('/user/reset_password', async (req, res) => {
   // data
-  var user = req.body.user;
-  var password = req.body.password;
+  var correo = req.body.correo;
   // logic
+  var query = `SELECT COUNT(*) AS count FROM users WHERE email=?`;
   let connection = dbApp()
-  let sql = `SELECT id, COUNT(*) AS count, user, name, email, image_url FROM users WHERE user=? AND password=?`;
-  connection.get(sql, [user, password], (err, row) => {
+  connection.get(query, [correo], (err, row) => {
     if (err) {
       console.error(err);
-      res.status(500).send('ups, ocurrió un error');
+      res.status(500).send('Ocurrió un error');
     }
-    connection.close();
+    console.log(row)
     if (row['count'] == 1){
       var response = {
         id:row['id'],
@@ -205,12 +220,41 @@ app.post('/user/validate', async (req, res, next) => {
         image_url: row['image_url']
       }
       res.status(200).send(response)
-      //res.status(200).send(row['id'].toString())
     }else{
-      res.status(500).send('Usuario y/o contraseña incorrectos')
+      connection.close();
+      res.status(500).send('Correo no registrado')
     }
   });
 });
+
+// app.post('/user/validate', async (req, res, next) => {
+//   // data
+//   var user = req.body.user;
+//   var password = req.body.password;
+//   // logic
+//   let connection = dbApp()
+//   let sql = `SELECT id, COUNT(*) AS count, user, name, email, image_url FROM users WHERE user=? AND password=?`;
+//   connection.get(sql, [user, password], (err, row) => {
+//     if (err) {
+//       console.error(err);
+//       res.status(500).send('ups, ocurrió un error');
+//     }
+//     connection.close();
+//     if (row['count'] == 1){
+//       var response = {
+//         id:row['id'],
+//         user: row['user'], 
+//         name: row['name'], 
+//         email: row['email'], 
+//         image_url: row['image_url']
+//       }
+//       res.status(200).send(response)
+//       //res.status(200).send(row['id'].toString())
+//     }else{
+//       res.status(500).send('Usuario y/o contraseña incorrectos')
+//     }
+//   });
+// });
 
 app.get('/user/fetch_one', (req, res) => {
   // data
@@ -340,19 +384,25 @@ app.post('/user/password', async (req, res, next) => {
   });
 });
 
-app.post('/user/validate', async (req, res, next) => {
+app.post('/user/validate',async (req, res) => {
+  console.log("Este es un mensaje random")
   // data
   var user = req.body.user;
   var password = req.body.password;
+  console.log(user)
+  console.log(password)
   // logic
   let connection = dbApp()
-  let sql = `SELECT id, COUNT(*) AS count, user, name, email, image_url FROM users WHERE user=? AND password=?`;
+  let sql = `SELECT COUNT(*) AS count, id, user, name, email, image_url FROM users WHERE user=? AND password=?`;
   connection.get(sql, [user, password], (err, row) => {
+    console.log(row)
+    //en caso de error
     if (err) {
       console.error(err);
-      res.status(500).send('ups, ocurrió un error');
+      res.status(500).send('Ocurrió un error');
     }
     connection.close();
+
     if (row['count'] == 1){
       var response = {
         id:row['id'],
@@ -362,7 +412,6 @@ app.post('/user/validate', async (req, res, next) => {
         image_url: row['image_url']
       }
       res.status(200).send(response)
-      //res.status(200).send(row['id'].toString())
     }else{
       res.status(500).send('Usuario y/o contraseña incorrectos')
     }
@@ -424,6 +473,46 @@ app.post('/user/validate/password', async (req, res, next) => {
     }
   });
 });
+
+app.get('/user/get_username',async(req,res)=> {
+  let usuario = req.query.usuario;
+  let connection = dbApp()
+  let sql = `SELECT id FROM users WHERE user=?`;
+  connection.get(sql, [usuario], (err, row) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('ocurrió un error');
+    }
+    connection.close();
+    if(row == null){
+      res.status(500).send('Usuario no encontrado')
+    }else{
+      res.status(200).send(row)
+    }
+  });
+ 
+})
+
+app.get('user/get_email',async(req,res) => {
+  let correo = req.query.correo;
+  let connection = dbApp()
+  let sql = `SELECT id FROM users WHERE email=?`;
+  connection.get(sql, [correo], (err, row) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('ocurrió un error');
+    }
+    var response = {
+      id:row['id'],
+      user: row['user'], 
+      name: row['name'], 
+      email: row['email'], 
+      image_url: row['image_url']
+    }
+    res.status(200).send(response)
+    connection.close();
+  });
+})
 
 app.listen(8000, () => {
   console.log('Listening to Port 8000');
