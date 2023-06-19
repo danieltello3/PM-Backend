@@ -308,15 +308,15 @@ app.post('/user/update', async (req, res, next) => {
   var email = req.body.email;
   // logic
   let sql = `UPDATE users SET user = ?, name = ?, email = ? WHERE id=?`;
-  let params = [user, user, email, id];
+  let params = [user, name, email, id];
   let connection = dbApp();
   connection.get(sql, params, (err, row) => {
     if (err) {
       console.error(err);
-      res.status(500).send('ups, ocurrió un error');
+      res.status(500).send({message: 'ups, ocurrió un error'});
     }else{
       connection.close();
-      res.status(200).send('Ok')
+      res.status(200).send({message: 'Ok',data: {user: user, name: name, email: email}})
     }
   });
 });
@@ -332,10 +332,10 @@ app.post('/user/password', async (req, res, next) => {
   connection.get(sql, params, (err, row) => {
     if (err) {
       console.error(err);
-      res.status(500).send('ups, ocurrió un error');
+      res.status(500).send({status: "Error", message: 'ups, ocurrió un error'});
     }else{
       connection.close();
-      res.status(200).send('Ok')
+      res.status(200).send({status: "OK", message: 'Ok'})
     }
   });
 });
@@ -365,6 +365,62 @@ app.post('/user/validate', async (req, res, next) => {
       //res.status(200).send(row['id'].toString())
     }else{
       res.status(500).send('Usuario y/o contraseña incorrectos')
+    }
+  });
+});
+
+app.post('/user/validate/unique', async (req, res, next) => {
+  // data
+  var id = req.body.id;
+  var user = req.body.user;
+  var email = req.body.email;
+  // logic
+  let connection = dbApp()
+  let sql = `SELECT id, COUNT(*) AS count, user, name, email FROM users WHERE id <> ? AND (user=? OR email=?)`;
+  connection.get(sql, [id,user, email], (err, row) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send({status: "Error",message: 'ups, ocurrió un error'});
+    }
+    console.log(row);
+    connection.close();
+    if (row['count'] == 1){
+      console.log("si entra")
+      console.log(row['name'],user)
+      console.log(row['email'],email)
+      var message = ''
+      if(row['user'] == user){
+        message = 'Error: El usuario ya existe'
+      }
+      else if(row['email'] == email){
+        message = 'Error: El email ya existe'
+      }
+      console.log({message})
+      res.status(200).send({status: "Error", message})
+      //res.status(200).send(row['id'].toString())
+    }else{
+      res.status(200).send({status: "OK", message: 'Usuario y Correo correctos'})
+    }
+  });
+});
+
+app.post('/user/validate/password', async (req, res, next) => {
+  // data
+  var id = req.body.id;
+  var password = req.body.password;
+  // logic
+  let connection = dbApp()
+  let sql = `SELECT COUNT(*) AS count FROM users WHERE id=? AND password=?`;
+  connection.get(sql, [id, password], (err, row) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send({status: "Error", message: 'ups, ocurrió un error'});
+    }
+    connection.close();
+    if (row['count'] == 1){
+      res.status(200).send({status: "OK", message: 'Contraseña valida'})
+    }else{
+      res.status(200).send({status: "Error", message: 'Contraseña antigua incorrecta'})
     }
   });
 });
