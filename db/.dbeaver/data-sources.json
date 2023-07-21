@@ -1,0 +1,29 @@
+{
+	"folders": {},
+	"connections": {
+		"sqlite_jdbc-188d613848b-645d4cade2e24736": {
+			"provider": "sqlite",
+			"driver": "sqlite_jdbc",
+			"name": "app.db",
+			"save-password": true,
+			"configuration": {
+				"database": "C:\\Users\\Brillitt\\Desktop\\PM\\PM-Backend\\db\\app.db",
+				"url": "jdbc:sqlite:C:\\Users\\Brillitt\\Desktop\\PM\\PM-Backend\\db\\app.db",
+				"configurationType": "MANUAL",
+				"type": "dev",
+				"auth-model": "native"
+			}
+		}
+	},
+	"connection-types": {
+		"dev": {
+			"name": "Development",
+			"color": "255,255,255",
+			"description": "Regular development database",
+			"auto-commit": true,
+			"confirm-execute": false,
+			"confirm-data-change": false,
+			"auto-close-transactions": false
+		}
+	}
+}
