@@ -117,7 +117,7 @@ app.post('/pokemon/save', async (req, res, next) => {
   connection.get(sql, params, (err, row) => {
     if (err) {
       console.error(err);
-      res.status(500).send('ups, ocurrió un error');
+      res.status(500).send('Ocurrió un error');
     }else{
       connection.close();
       if (id != 0){
@@ -132,24 +132,24 @@ app.post('/pokemon/save', async (req, res, next) => {
 
 app.post('/user/create', async (req, res, next) => {
   // data
-  var user = req.body.user;
+  var username = req.body.username;
   var password = req.body.password;
   var email = req.body.email;
+  var uid = req.body.uid;
+  var name = req.body.name;
   var image_url = 'user_default.png';
   // logic
   var query1 = `SELECT COUNT(*) AS count FROM users WHERE user=? OR email=?`;
-  var query2 = `INSERT INTO users (user, password, email, image_url) VALUES (?, ?, ?, ?)`;
+  var query2 = `INSERT INTO users (user, password, email, uid, image_url, name) VALUES (?, ?, ?, ?, ?, ?)`;
   let connection = dbApp()
-  connection.get(query1, [user, email], (err, row) => {
+  connection.get(query1, [username, email], (err, row) => {
     if (err) {
       console.error(err);
-      res.status(500).send('ups, ocurrió un error');
+      res.status(500).send('Ocurrió un error');
     }
     if (row['count'] == 0){
-      connection.run(query2, [user, password, email, image_url], function(err) {
-        // console.error(err)
+      connection.run(query2, [username, password, email, uid, image_url, name], function(err) {
         if (err) {
-          // console.error(err.message)
           connection.close();
           res.status(500).send('Error al crear al nuevo usuario')
         }
@@ -167,10 +167,11 @@ app.post('/user/create_account', async (req, res, next) => {
   var usuario = req.body.user
   var contrasenia = req.body.password;
   var correo = req.body.email;
+  var nombre = req.body.username
   var image_url = 'user_default.png';
   // logic
   var query1 = `SELECT COUNT(*) AS count FROM users WHERE user=? OR email=?`;
-  var query2 = `INSERT INTO users (user, password, email, image_url) VALUES (?, ?, ?, ?)`;
+  var query2 = `INSERT INTO users (user, password, name, email, image_url) VALUES (?, ?, ?, ?, ?)`;
   let connection = dbApp()
   connection.get(query1, [usuario, correo], (err, row) => {
     if (err) {
@@ -178,7 +179,7 @@ app.post('/user/create_account', async (req, res, next) => {
       res.status(500).send('Error: Ocurrio un error');
     }
     if (row['count'] == 0){
-      connection.run(query2, [usuario, contrasenia, correo, image_url], function(err) {
+      connection.run(query2, [usuario, contrasenia, nombre, correo, image_url], function(err) {
         if (err) {
           connection.close();
           res.status(500).send('Error al crear al nuevo usuario')
@@ -190,6 +191,7 @@ app.post('/user/create_account', async (req, res, next) => {
           email: row['email'], 
           image_url: row['image_url']
         }
+        console.log(response)
         res.status(200).send(response)
       });
     }else{
@@ -201,9 +203,9 @@ app.post('/user/create_account', async (req, res, next) => {
 
 app.post('/user/reset_password', async (req, res) => {
   // data
-  var correo = req.body.correo;
+  var correo = req.body.email;
   // logic
-  var query = `SELECT COUNT(*) AS count FROM users WHERE email=?`;
+  var query = `SELECT id ,COUNT(*) AS count FROM users WHERE email=?`;
   let connection = dbApp()
   connection.get(query, [correo], (err, row) => {
     if (err) {
@@ -213,11 +215,7 @@ app.post('/user/reset_password', async (req, res) => {
     console.log(row)
     if (row['count'] == 1){
       var response = {
-        id:row['id'],
-        user: row['user'], 
-        name: row['name'], 
-        email: row['email'], 
-        image_url: row['image_url']
+        id:row['id']
       }
       res.status(200).send(response)
     }else{
@@ -227,35 +225,23 @@ app.post('/user/reset_password', async (req, res) => {
   });
 });
 
-// app.post('/user/validate', async (req, res, next) => {
+// app.get('/user/fetch_one', (req, res) => {
 //   // data
-//   var user = req.body.user;
-//   var password = req.body.password;
+//   let userId = req.query.id;
 //   // logic
 //   let connection = dbApp()
-//   let sql = `SELECT id, COUNT(*) AS count, user, name, email, image_url FROM users WHERE user=? AND password=?`;
-//   connection.get(sql, [user, password], (err, row) => {
+//   let sql = `SELECT id, name, user, email, image_url FROM users WHERE id=?`;
+//   connection.get(sql, [userId], (err, row) => {
 //     if (err) {
 //       console.error(err);
 //       res.status(500).send('ups, ocurrió un error');
 //     }
 //     connection.close();
-//     if (row['count'] == 1){
-//       var response = {
-//         id:row['id'],
-//         user: row['user'], 
-//         name: row['name'], 
-//         email: row['email'], 
-//         image_url: row['image_url']
-//       }
-//       res.status(200).send(response)
-//       //res.status(200).send(row['id'].toString())
-//     }else{
-//       res.status(500).send('Usuario y/o contraseña incorrectos')
-//     }
+//     res.send(row)
 //   });
 // });
 
+//-----------cambios hechos por Brillitt----------------
 app.get('/user/fetch_one', (req, res) => {
   console.log("Entra al user/fetch_one")
   // data
@@ -273,6 +259,10 @@ app.get('/user/fetch_one', (req, res) => {
     res.send(row)
   });
 });
+//-----------cambios hechos por Brillitt----------------
+
+
+
 
 app.get('/user/pokemon', (req, res) => {
   // data
@@ -386,17 +376,49 @@ app.post('/user/password', async (req, res, next) => {
   });
 });
 
+// app.post('/user/validate',async (req, res) => {
+//   console.log("Este es un mensaje random")
+//   // data
+//   var user = req.body.user;
+//   var password = req.body.password;
+//   console.log(user)
+//   console.log(password)
+//   // logic
+//   let connection = dbApp()
+//   let sql = `SELECT COUNT(*) AS count, id, user, name, email, image_url FROM users WHERE user=? AND password=?`;
+//   connection.get(sql, [user, password], (err, row) => {
+//     console.log(row)
+//     //en caso de error
+//     if (err) {
+//       console.error(err);
+//       res.status(500).send('Ocurrió un error');
+//     }
+//     connection.close();
+
+//     if (row['count'] == 1){
+//       var response = {
+//         id:row['id'],
+//         user: row['user'], 
+//         name: row['name'], 
+//         email: row['email'], 
+//         image_url: row['image_url']
+//       }
+//       res.status(200).send(response)
+//     }else{
+//       res.status(500).send('Usuario y/o contraseña incorrectos')
+//     }
+//   });
+// });
+
 app.post('/user/validate',async (req, res) => {
-  console.log("Este es un mensaje random")
   // data
-  var user = req.body.user;
+  var email = req.body.email;
   var password = req.body.password;
-  console.log(user)
-  console.log(password)
+
   // logic
   let connection = dbApp()
-  let sql = `SELECT COUNT(*) AS count, id, user, name, email, image_url FROM users WHERE user=? AND password=?`;
-  connection.get(sql, [user, password], (err, row) => {
+  let sql = `SELECT COUNT(*) AS count, id FROM users WHERE user=? AND password=?`;
+  connection.get(sql, [email, password], (err, row) => {
     console.log(row)
     //en caso de error
     if (err) {
@@ -407,11 +429,7 @@ app.post('/user/validate',async (req, res) => {
 
     if (row['count'] == 1){
       var response = {
-        id:row['id'],
-        user: row['user'], 
-        name: row['name'], 
-        email: row['email'], 
-        image_url: row['image_url']
+        id:row['id']
       }
       res.status(200).send(response)
     }else{
@@ -459,19 +477,20 @@ app.post('/user/validate/password', async (req, res, next) => {
   // data
   var id = req.body.id;
   var password = req.body.password;
+  console.log(id,password)
   // logic
   let connection = dbApp()
   let sql = `SELECT COUNT(*) AS count FROM users WHERE id=? AND password=?`;
   connection.get(sql, [id, password], (err, row) => {
     if (err) {
       console.error(err);
-      res.status(500).send({status: "Error", message: 'ups, ocurrió un error'});
+      res.status(500).send({status: "Error", message: 'Error: Ocurrió un error'});
     }
     connection.close();
     if (row['count'] == 1){
       res.status(200).send({status: "OK", message: 'Contraseña valida'})
     }else{
-      res.status(200).send({status: "Error", message: 'Contraseña antigua incorrecta'})
+      res.status(200).send({status: "Error", message: 'Error: Contraseña antigua incorrecta'})
     }
   });
 });
@@ -495,8 +514,8 @@ app.get('/user/get_username',async(req,res)=> {
  
 })
 
-app.get('user/get_email',async(req,res) => {
-  let correo = req.query.correo;
+app.get('/user/get_email',async(req,res) => {
+  let correo = req.query.email;
   let connection = dbApp()
   let sql = `SELECT id FROM users WHERE email=?`;
   connection.get(sql, [correo], (err, row) => {
@@ -505,11 +524,7 @@ app.get('user/get_email',async(req,res) => {
       res.status(500).send('ocurrió un error');
     }
     var response = {
-      id:row['id'],
-      user: row['user'], 
-      name: row['name'], 
-      email: row['email'], 
-      image_url: row['image_url']
+      id:row['id']
     }
     res.status(200).send(response)
     connection.close();
