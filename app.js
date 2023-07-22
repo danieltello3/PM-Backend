@@ -537,7 +537,7 @@ app.get('/user', (req, res) => {
   let id = req.query.id;
   // logic
   let connection = dbApp()
-  let sql = `SELECT id, name, user, email, image_url FROM users WHERE id=?`;
+  let sql = `SELECT id, name, user, email, image_url, uid FROM users WHERE id=?`;
   connection.get(sql, [id], (err, row) => {
     if (err) {
       console.error(err);
