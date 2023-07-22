@@ -257,15 +257,17 @@ app.post('/user/reset_password', async (req, res) => {
 // });
 
 app.get('/user/fetch_one', (req, res) => {
+  console.log("Entra al user/fetch_one")
   // data
-  let userId = req.query.id;
+  let uid = req.query.uid;
+  console.log("uid: ",uid)
   // logic
   let connection = dbApp()
-  let sql = `SELECT id, name, user, email, image_url FROM users WHERE id=?`;
-  connection.get(sql, [userId], (err, row) => {
+  let sql = `SELECT id, name, user, email, image_url, uid FROM users WHERE uid=?`;
+  connection.get(sql, [uid], (err, row) => {
     if (err) {
       console.error(err);
-      res.status(500).send('ups, ocurrió un error');
+      res.status(500).send('Ocurrió un error');
     }
     connection.close();
     res.send(row)
@@ -513,6 +515,23 @@ app.get('user/get_email',async(req,res) => {
     connection.close();
   });
 })
+
+app.get('/user', (req, res) => {
+  console.log("Entra al user")
+  // data
+  let id = req.query.id;
+  // logic
+  let connection = dbApp()
+  let sql = `SELECT id, name, user, email, image_url FROM users WHERE id=?`;
+  connection.get(sql, [id], (err, row) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('Ocurrió un error');
+    }
+    connection.close();
+    res.send(row)
+  });
+});
 
 app.listen(8000, () => {
   console.log('Listening to Port 8000');
