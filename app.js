@@ -132,24 +132,24 @@ app.post('/pokemon/save', async (req, res, next) => {
 
 app.post('/user/create', async (req, res, next) => {
   // data
-  var user = req.body.user;
+  var username = req.body.username;
   var password = req.body.password;
   var email = req.body.email;
+  var uid = req.body.uid;
+  var name = req.body.name;
   var image_url = 'user_default.png';
   // logic
   var query1 = `SELECT COUNT(*) AS count FROM users WHERE user=? OR email=?`;
-  var query2 = `INSERT INTO users (user, password, email, image_url) VALUES (?, ?, ?, ?)`;
+  var query2 = `INSERT INTO users (user, password, email, uid, image_url, name) VALUES (?, ?, ?, ?, ?, ?)`;
   let connection = dbApp()
-  connection.get(query1, [user, email], (err, row) => {
+  connection.get(query1, [username, email], (err, row) => {
     if (err) {
       console.error(err);
       res.status(500).send('Ocurrió un error');
     }
     if (row['count'] == 0){
-      connection.run(query2, [user, password, email, image_url], function(err) {
-        // console.error(err)
+      connection.run(query2, [username, password, email, uid, image_url, name], function(err) {
         if (err) {
-          // console.error(err.message)
           connection.close();
           res.status(500).send('Error al crear al nuevo usuario')
         }
@@ -531,7 +531,22 @@ app.get('/user/get_email',async(req,res) => {
   });
 })
 
-
+app.get('/user', (req, res) => {
+  console.log("Entra al user")
+  // data
+  let id = req.query.id;
+  // logic
+  let connection = dbApp()
+  let sql = `SELECT id, name, user, email, image_url FROM users WHERE id=?`;
+  connection.get(sql, [id], (err, row) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('Ocurrió un error');
+    }
+    connection.close();
+    res.send(row)
+  });
+});
 
 app.listen(8000, () => {
   console.log('Listening to Port 8000');
